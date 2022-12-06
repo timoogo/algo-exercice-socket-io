@@ -4,7 +4,25 @@
     box-sizing: border-box;
 }
 
-#map{
-    width: auto;
-    height: 500px;
+#app{
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;
 }
+
+#map{
+    width: 100%;
+    height: 100vh;
+}
+
+#restaos{
+    height: 100vh;
+    width: 100%;
+    background-color: brown;
+}
+
+#chat{
+    height: 100vh;
+    width: 100%;
+    background-color: blue;
+}
+

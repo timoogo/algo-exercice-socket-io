@@ -1,30 +1,14 @@
-import { PositionComponent } from "./Components/PositionComponent";
 import { renderRestaurantsComponents } from "./Components/ListOfRestaurantsComponent";
 import { mockRestaurants } from "./mocks/mock-restaurants";
 import { renderDropdownComponent } from "./Components/DropDownComponent";
 
-
 import * as L from 'leaflet';
-<<<<<<< Updated upstream
-// const position = new PositionComponent(1.9, 2.19);
-// const positionDiv = document.createElement("div");
-// document.body.appendChild(positionDiv);
-// positionDiv.classList.add("position");
-// positionDiv.innerHTML = `lat: ${position.lat}, lng: ${position.lng}`;
-
+import {LatLng} from "leaflet";
 
 document.addEventListener("DOMContentLoaded", () => {
-    
     renderRestaurantsComponents(mockRestaurants);
     renderDropdownComponent(mockRestaurants);
-
 });
-
-
-
-=======
-import {LatLng} from "leaflet";
->>>>>>> Stashed changes
 
 let lat : number = 48.9118463
     let long : number = 2.3225758
@@ -68,14 +52,13 @@ goal.on('dragend', (e) => {
 
 console.log(goal.getLatLng())
 
-startMarker.bindPopup("<b>Hello world!</b><br>I am a popup.").openPopup();
+startMarker.bindPopup("This is your position").openPopup();
 goal.bindPopup("Meetup point");
 
 // let popup = L.popup()
 //     .setLatLng([lat, 2.34])
 //     .setContent("I am a standalone popup.")
 //     .openOn(map);
-
 
 function distance(pointA : LatLng, pointB : LatLng) : number {
     let p = Math.PI / 180;
