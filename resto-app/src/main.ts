@@ -4,10 +4,28 @@ import { renderDropdownComponent } from "./Components/DropDownComponent";
 
 import * as L from 'leaflet';
 import {LatLng} from "leaflet";
+import { Client } from "./Components/client";
+import { io } from "socket.io-client";
 
 document.addEventListener("DOMContentLoaded", () => {
     renderRestaurantsComponents(mockRestaurants);
     renderDropdownComponent(mockRestaurants);
+    // onClick, fn Client()
+
+});
+document.addEventListener("click", () => {
+   
+const socket = io();
+// add cors to server
+
+// client-side
+socket.on("connect", () => {
+    console.log(socket.id); // x8WIv7-mJelg7on_ALbx
+  });
+  
+  socket.on("disconnect", () => {
+    console.log(socket.id); // undefined
+  });
 });
 
 let lat : number = 48.9118463
