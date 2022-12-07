@@ -34,7 +34,7 @@ export function renderDropdownComponent(elements: Restaurant[] ) : HTMLSelectEle
             // add the option to the select
             select.appendChild(option);
             // set the option value to the element name
-            option.innerHTML = element.name;
+            option.innerHTML = element.name + ': ' + element.address;
             option.value = `${element.position.lat};${element.position.lng}`;
             console.log(option.value);
             // if the option is selected,     dropdownListener(select);

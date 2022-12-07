@@ -4,30 +4,57 @@ import { renderDropdownComponent } from "./Components/DropDownComponent";
 
 import * as L from 'leaflet';
 import {LatLng} from "leaflet";
-import { Client } from "./Components/client";
-import { io } from "socket.io-client";
+import {io, Socket} from "socket.io-client";
 
+
+// SOCKETS STUFF
+let socket: Socket;
+socket = io()
 document.addEventListener("DOMContentLoaded", () => {
     renderRestaurantsComponents(mockRestaurants);
     renderDropdownComponent(mockRestaurants);
-    // onClick, fn Client()
-
 });
 document.addEventListener("click", () => {
-   
-const socket = io();
-// add cors to server
-
 // client-side
-socket.on("connect", () => {
-    console.log(socket.id); // x8WIv7-mJelg7on_ALbx
-  });
-  
-  socket.on("disconnect", () => {
-    console.log(socket.id); // undefined
-  });
+    socket.on("connect", () => {
+        console.log(socket.id);
+    });
+
+    socket.on("disconnect", () => {
+        console.log(socket.id);
+    });
 });
 
+document.querySelector('#form')!.addEventListener("submit", (event) => {
+    event.preventDefault()
+    let input = document.querySelector('#input') as HTMLInputElement;
+    console.log(event);
+    if (input.value) {
+        socket.emit("new message", {message: input.value, id: socket.id});
+        input.value = "";
+    }
+})
+
+socket.on("write message", (data) => {
+    let chatDiv = document.createElement("li");
+    chatDiv.className = "chat";
+    let userSpan = document.createElement("span");
+    userSpan.className = "user";
+    userSpan.innerHTML = data.id;
+    let message = document.createElement("p");
+    message.className = "message";
+    message.innerHTML = data.message;
+    chatDiv.appendChild(userSpan);
+    chatDiv.appendChild(message);
+    let messages : HTMLUListElement = document.querySelector("#messages")!;
+    messages.appendChild(chatDiv);
+    messages.scrollTop = messages.scrollHeight;
+})
+
+//END OF SOCKETS STUFF
+
+
+// MAP STUFF
 let lat : number = 48.9118463
 let long : number = 2.3225758
 
@@ -48,11 +75,11 @@ let goal = L.marker([48.8263658,2.3690903], {
     })
 }).addTo(map);
 
-// map.locate({setView: true, maxZoom: 16});
-//
-// setInterval(() => {
-//     map.locate();
-// }, 10000); // calcul toutes les 10 secs
+map.locate({setView: true, maxZoom: 16});
+
+setInterval(() => {
+    map.locate();
+}, 10000); // calcul toutes les 10 secs
 
 map.on('locationfound', (e) => {
     startMarker.setLatLng(e.latlng);
@@ -88,7 +115,7 @@ function createRestaurantMarker(pos: string, name:string) {
     let lat = parseFloat(pos.split(";")[0]);
     let long = parseFloat(pos.split(";")[1]);
     currentUserRestaurant.setLatLng([lat, long]).addTo(map);
-    currentUserRestaurant.bindPopup(name).openPopup();
+    currentUserRestaurant.bindPopup(name);
 }
 
 function distance(pointA : LatLng, pointB : LatLng) : number {
@@ -111,4 +138,6 @@ function calculateRoute(start : LatLng, goal : LatLng) : number {
 function travelTime(distance : number, speed: number) : number {
     return distance / speed;
 }
+//END OF MAP STUFF
+
 export { createRestaurantMarker }

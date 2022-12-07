@@ -4,9 +4,38 @@
     box-sizing: border-box;
 }
 
+body{
+    font-family: 'Poppins', sans-serif;
+    background: #f5f5f5;
+}
+
 #app{
+    width: 100%;
     display: grid;
     grid-template-columns: 1fr 3fr 1fr;
+}
+
+#restaos{
+    height: 100vh;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+
+/*pretty select*/
+.select {
+    position: relative;
+    display: inline-block;
+    width: 90%;
+    height: 40px;
+    line-height: 40px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    margin: 10px auto;
 }
 
 #map{
@@ -14,15 +43,70 @@
     height: 100vh;
 }
 
-#restaos{
-    height: 100vh;
-    width: 100%;
-    background-color: brown;
-}
-
 #chat{
     height: 100vh;
-    width: 100%;
-    background-color: blue;
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 }
+
+#messages{
+    overflow-y: auto;
+}
+
+#messages li:nth-child(odd){
+    background: #ffffff;
+}
+
+li{
+    padding: 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid lightgray;
+}
+
+li span {
+    font-size: 12px;
+}
+form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px;
+}
+
+form input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+form button {
+    border-radius: 5px;
+    padding: 5px;
+    border: none;
+    background: #005eff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+    box-shadow: 0 0 5px 1px #005eff;
+    transform: translate(0, -2px);
+    cursor: pointer;
+}
+
+button img{
+    filter: brightness(0) invert(1);
+    width: 20px;
+}
+
+
 
