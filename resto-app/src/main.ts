@@ -78,7 +78,12 @@ goal.bindPopup("Meetup point");
 //     .setContent("I am a standalone popup.")
 //     .openOn(map);
 
-let currentUserRestaurant = L.marker([0,0])
+// greenMarker
+let currentUserRestaurant = L.marker([0, 0], {
+    icon: L.icon({
+        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+    })
+})
 function createRestaurantMarker(pos: string, name:string) {
     let lat = parseFloat(pos.split(";")[0]);
     let long = parseFloat(pos.split(";")[1]);
