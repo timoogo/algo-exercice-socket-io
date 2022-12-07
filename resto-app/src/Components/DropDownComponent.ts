@@ -1,22 +1,21 @@
 import { Restaurant } from "../Models/Restaurant";
+import {createRestaurantMarker} from "../main";
 
 function dropdownListener(select: HTMLSelectElement) {
     let restaurantDiv = document.createElement("div");
-    document.body.appendChild(restaurantDiv);
+    document.querySelector('#restaos')!.appendChild(restaurantDiv);
     restaurantDiv.classList.add("restaurant");
     select.addEventListener("change", (event: any) => {
-       console.log("b4 if");
+        console.log("b4 if");
         
         if (select.value == "Choose a restaurant") {
             console.log("Choose a restaurant");
-            
             restaurantDiv.innerHTML = select.value;
         } else {
             console.log("else");
-              restaurantDiv.innerHTML += "restao" + event.target.value;
-              let test = select.options[select.selectedIndex].text;
-                console.log(test);
-
+            restaurantDiv.innerHTML = "restao" + event.target.value;
+            let restaurantName = select.options[select.selectedIndex].text;
+            createRestaurantMarker(event.target.value, restaurantName);
         }
     })
 }
@@ -25,9 +24,9 @@ export function renderDropdownComponent(elements: Restaurant[] ) : HTMLSelectEle
     // make a dropdown menu with the list of restaurants
     let select = document.createElement("select");
     dropdownListener(select);
-     document.body.appendChild(select);
-     select.classList.add("select");
-     select.innerHTML = "<option>Choose a restaurant</option>";
+    document.querySelector('#restaos')!.appendChild(select);
+    select.classList.add("select");
+    select.innerHTML = "<option>Choose a restaurant</option>";
      // forEAch element (typeOf HTMLElement) in elements
         elements.forEach((element) => {
             // create an option
@@ -41,9 +40,7 @@ export function renderDropdownComponent(elements: Restaurant[] ) : HTMLSelectEle
             // if the option is selected,     dropdownListener(select);
 
             
-        }
-     )
+        })
         return select;
-
 }
 

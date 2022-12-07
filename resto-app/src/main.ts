@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 let lat : number = 48.9118463
-    let long : number = 2.3225758
+let long : number = 2.3225758
 
 let map = L.map('map').setView([lat, long], 13);
 
@@ -60,6 +60,14 @@ goal.bindPopup("Meetup point");
 //     .setContent("I am a standalone popup.")
 //     .openOn(map);
 
+let currentUserRestaurant = L.marker([0,0])
+function createRestaurantMarker(pos: string, name:string) {
+    let lat = parseFloat(pos.split(";")[0]);
+    let long = parseFloat(pos.split(";")[1]);
+    currentUserRestaurant.setLatLng([lat, long]).addTo(map);
+    currentUserRestaurant.bindPopup(name).openPopup();
+}
+
 function distance(pointA : LatLng, pointB : LatLng) : number {
     let p = Math.PI / 180;
     const cos = Math.cos;
@@ -80,4 +88,4 @@ function calculateRoute(start : LatLng, goal : LatLng) : number {
 function travelTime(distance : number, speed: number) : number {
     return distance / speed;
 }
-export {}
+export { createRestaurantMarker }

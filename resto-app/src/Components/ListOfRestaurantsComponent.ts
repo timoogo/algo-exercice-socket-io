@@ -1,8 +1,7 @@
 import { Restaurant } from './../Models/Restaurant';
-import { ConvertStringToHTMLAchor} from './utils/ConvertStringToHTMLAchor';
 export function renderRestaurantsComponents(restaurants: Restaurant[]){
     const restaurantsDiv = document.createElement("div");
-    document.body.appendChild(restaurantsDiv);
+    document.querySelector("#restaos")!.appendChild(restaurantsDiv);
     restaurantsDiv.classList.add("restaurants");
     restaurantsDiv.innerHTML = "<h2>Restaurants</h2>";
     restaurants.forEach((restaurant) => {
@@ -14,11 +13,5 @@ export function renderRestaurantsComponents(restaurants: Restaurant[]){
             <p>${restaurant.address}</p>
             <p>lat: ${restaurant.position.lat}, lng: ${restaurant.position.lng}</p>
         `;
-    }
-        
-        
-
-
-    
-    )
+    })
 }
