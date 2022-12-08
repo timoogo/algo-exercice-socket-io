@@ -1,26 +1,37 @@
+import { User } from './Models/User';
 import { renderRestaurantsComponents } from "./Components/ListOfRestaurantsComponent";
 import { mockRestaurants } from "./mocks/mock-restaurants";
 import { renderDropdownComponent } from "./Components/DropDownComponent";
-
 import * as L from 'leaflet';
 import {LatLng} from "leaflet";
-import { Client } from "./Components/client";
 import { io } from "socket.io-client";
+import { closePopin, showPopin } from "./Components/Popin";
 
+let user: User = {
+    name: undefined,
+    position: {
+        lat: undefined,
+        lng: undefined
+    },
+    inRoom: false,
+    room: "",
+    id: 0
+}
 document.addEventListener("DOMContentLoaded", () => {
+   
     renderRestaurantsComponents(mockRestaurants);
     renderDropdownComponent(mockRestaurants);
-    // onClick, fn Client()
+    showPopin(user);
 
 });
-document.addEventListener("click", () => {
-   
+document.addEventListener("click", (event) => {
+
 const socket = io();
 // add cors to server
 
 // client-side
 socket.on("connect", () => {
-    console.log(socket.id); // x8WIv7-mJelg7on_ALbx
+  //  console.log(socket.id); // x8WIv7-mJelg7on_ALbx
   });
   
   socket.on("disconnect", () => {

@@ -1,12 +1,8 @@
 import { Position } from "../Contracts/Positions";
 
-export class Restaurant {
+export interface Restaurant {
     name: string;
     address: string;
     position: Position;
-    constructor(name: string, address: string, position: Position) {
-        this.name = name;
-        this.address = address;
-        this.position = position;
-    }
+
 }
