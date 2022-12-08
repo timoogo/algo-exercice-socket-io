@@ -18,6 +18,10 @@ io.on('connection', (socket) => {
     io.emit('send restaurant', data);
   })
 
+  socket.on('goal changed', (data ) => {
+    io.emit('move goal', data);
+  })
+
   socket.on('disconnect', () => {
     console.log('user disconnected');
   })

@@ -94,9 +94,15 @@ map.on('locationfound', (e) => {
 
 goal.on('dragend', (e) => {
     calculateRoute(startMarker.getLatLng(), e.target.getLatLng());
+    socket.emit("goal changed", e.target.getLatLng());
     console.log("Goal moved to: " + e.target.getLatLng());
     console.log("Distance to goal: " + distance(startMarker.getLatLng(), e.target.getLatLng()));
     console.log("Travel time to goal: " + travelTime(distance(startMarker.getLatLng(), e.target.getLatLng()), 5));
+})
+
+socket.on("move goal", (data) => {
+    goal.setLatLng(data);
+    calculateRoute(startMarker.getLatLng(), data);
 })
 
 console.log(goal.getLatLng())
