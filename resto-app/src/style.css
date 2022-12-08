@@ -17,7 +17,7 @@ body{
 
 #restaos{
     height: 100vh;
-    width: 300px;
+    min-width: 300px;
     display: flex;
     flex-direction: column;
     padding: 10px;
@@ -45,7 +45,7 @@ body{
 
 #chat{
     height: 100vh;
-    width: 200px;
+    min-width: 200px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
