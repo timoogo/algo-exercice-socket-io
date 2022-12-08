@@ -2,7 +2,7 @@ import { Restaurant } from "../Models/Restaurant";
 import { mockPositions } from './mock-positions';
 
 export const mockRestaurants: Restaurant[] = [
-    new Restaurant("Restaurant 1", "75 rue du chateau, Paris 13", mockPositions[0]),
-    new Restaurant("Restaurant 2", "32 allée des Cignes", mockPositions[1]),
-    new Restaurant("Restaurant 3", "1 Boulevard des Maréchaux", mockPositions[2]),
+    new Restaurant("La Balle au bond", "75006 Prom. Marceline Loridan-Ivens, 75006 Paris", mockPositions[0]),
+    new Restaurant("Coffee Crepes", "24 Quai du Louvre, 75001 Paris", mockPositions[1]),
+    new Restaurant("BaoBao Tea", "10 Rue Dauphine, 75006 Paris", mockPositions[2]),
 ]

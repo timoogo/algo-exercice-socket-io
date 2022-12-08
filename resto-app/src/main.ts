@@ -28,7 +28,6 @@ document.addEventListener("click", () => {
 document.querySelector('#form')!.addEventListener("submit", (event) => {
     event.preventDefault()
     let input = document.querySelector('#input') as HTMLInputElement;
-    console.log(event);
     if (input.value) {
         socket.emit("new message", {message: input.value, id: socket.id});
         input.value = "";
@@ -36,6 +35,7 @@ document.querySelector('#form')!.addEventListener("submit", (event) => {
 })
 
 socket.on("write message", (data) => {
+    console.log("saluuuts")
     let chatDiv = document.createElement("li");
     chatDiv.className = "chat";
     let userSpan = document.createElement("span");
@@ -51,6 +51,9 @@ socket.on("write message", (data) => {
     messages.scrollTop = messages.scrollHeight;
 })
 
+socket.on("login", () => {
+    console.log("login");
+})
 //END OF SOCKETS STUFF
 
 
@@ -65,8 +68,9 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
-let startMarker = L.marker([lat, long]).addTo(map);
+// const usersMarkers : {[key: string]: L.Marker} = {};
 
+let startMarker = L.marker([lat, long]).addTo(map);
 let goal = L.marker([48.8263658,2.3690903], {
     draggable: true,
     title: "Draggable Goal",
@@ -105,18 +109,26 @@ goal.bindPopup("Meetup point");
 //     .setContent("I am a standalone popup.")
 //     .openOn(map);
 
-// greenMarker
-let currentUserRestaurant = L.marker([0, 0], {
-    icon: L.icon({
-        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-    })
-})
-function createRestaurantMarker(pos: string, name:string) {
+const usersRestaurants: {[id: string]: L.Marker} = {};
+
+function createRestaurantMarker(pos: string, name:string, id: string) {
     let lat = parseFloat(pos.split(";")[0]);
     let long = parseFloat(pos.split(";")[1]);
-    currentUserRestaurant.setLatLng([lat, long]).addTo(map);
-    currentUserRestaurant.bindPopup(name);
+    if (usersRestaurants[id]) {
+        usersRestaurants[id].setLatLng([lat, long]);
+    }else{
+        //green marker or yellow marker
+        usersRestaurants[id] = L.marker([lat, long], {
+            icon: L.icon({
+                iconUrl: id === socket.id ? 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png' : 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
+            })
+        }).bindPopup(`${name} <br> From : ${socket.id}`).addTo(map);
+    }
 }
+
+socket.on("send restaurant", (data) => {
+    createRestaurantMarker(data.position, data.name, data.id);
+})
 
 function distance(pointA : LatLng, pointB : LatLng) : number {
     let p = Math.PI / 180;
@@ -140,4 +152,4 @@ function travelTime(distance : number, speed: number) : number {
 }
 //END OF MAP STUFF
 
-export { createRestaurantMarker }
+export { createRestaurantMarker, socket };

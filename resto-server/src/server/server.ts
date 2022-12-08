@@ -7,17 +7,19 @@ const io = new Server(server);
 
 io.on('connection', (socket) => {
   console.log('a user connected');
+  console.log(socket.rooms)
+  socket.emit("login")
 
   socket.on("new message", (data) => {
-    socket.emit("write message", data);
+    io.emit("write message", data);
+  })
+
+  socket.on('new restaurant', (data) => {
+    io.emit('send restaurant', data);
+  })
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
   })
 });
 server.listen(3000, () => {});
-
-// server-side
-io.on("connection", (socket) => {
-  console.log(socket.id);
-});
-
-
-
