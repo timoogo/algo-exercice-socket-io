@@ -1,11 +1,11 @@
 import { User } from './../Models/User';
+import {socket} from "../main";
+
 export function showPopin(user: User){
     const popin = document.querySelector("#popin") as HTMLElement;
     popin.style.display = "block";
     // when page is loaded, show popin
     createForm(user);
-    
-  
 }
 
 function createForm(user: User){
@@ -22,6 +22,7 @@ function createForm(user: User){
     inputName.setAttribute("type", "text");
     inputName.setAttribute("placeholder", "Enter your name");
     inputName.setAttribute("value", user.name ? user.name : "");
+
     const saveUserButton = document.createElement("button");
     saveUserButton.setAttribute("type", "button");
     saveUserButton.setAttribute("id", "saveUser");
@@ -60,12 +61,10 @@ export function saveUser(user: User){
         user.inRoom = true;
         message.innerText = "User saved";
         form.appendChild(message);
+        socket.emit("new user", user);
         setTimeout(() => {
-            // create a p message in popin to say that user has been saved
-           
-
             closePopin();
-        }, 5000);
+        }, 1500);
   
     } else {
         message.innerText = "Please enter a name and a room id";

@@ -1,5 +1,5 @@
 import { Restaurant } from "../Models/Restaurant";
-import {createRestaurantMarker} from "../main";
+import {createRestaurantMarker, socket} from "../main";
 
 function dropdownListener(select: HTMLSelectElement) {
     let restaurantDiv = document.createElement("div");
@@ -15,7 +15,8 @@ function dropdownListener(select: HTMLSelectElement) {
             console.log("else");
             restaurantDiv.innerHTML = "restao" + event.target.value;
             let restaurantName = select.options[select.selectedIndex].text;
-            createRestaurantMarker(event.target.value, restaurantName);
+            createRestaurantMarker(event.target.value, restaurantName, socket.id);
+            socket.emit("new restaurant", {position: event.target.value, name: restaurantName, id: socket.id});
         }
     })
 }
@@ -34,7 +35,7 @@ export function renderDropdownComponent(elements: Restaurant[] ) : HTMLSelectEle
             // add the option to the select
             select.appendChild(option);
             // set the option value to the element name
-            option.innerHTML = element.name;
+            option.innerHTML = element.name + ': ' + element.address;
             option.value = `${element.position.lat};${element.position.lng}`;
             console.log(option.value);
             // if the option is selected,     dropdownListener(select);

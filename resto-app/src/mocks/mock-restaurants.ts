@@ -17,5 +17,5 @@ export const mockRestaurants: Restaurant[] = [
         name: "Le Bouchon",
         address: "3 rue de la Paix",
         position: mockPositions[2],
-    },
+    }
 ]

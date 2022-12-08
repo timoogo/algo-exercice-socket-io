@@ -4,52 +4,92 @@ import { mockRestaurants } from "./mocks/mock-restaurants";
 import { renderDropdownComponent } from "./Components/DropDownComponent";
 import * as L from 'leaflet';
 import {LatLng} from "leaflet";
-import { io } from "socket.io-client";
-import { closePopin, showPopin } from "./Components/Popin";
+import { io, Socket } from "socket.io-client";
+import { showPopin } from "./Components/Popin";
 
-let user: User = {
+let myself: User = {
     name: undefined,
     position: {
-        lat: undefined,
-        lng: undefined
+        lat: 0,
+        lng: 0,
     },
     inRoom: false,
     room: "",
-    id: 0
+    id: "id"
 }
+
+let allUsers: User[] = [];
+
+// SOCKETS STUFF
+let socket: Socket;
+socket = io()
+
 document.addEventListener("DOMContentLoaded", () => {
    
     renderRestaurantsComponents(mockRestaurants);
     renderDropdownComponent(mockRestaurants);
-    showPopin(user);
+    showPopin(myself);
 
 });
-document.addEventListener("click", (event) => {
-
-const socket = io();
-// add cors to server
-
+document.addEventListener("click", () => {
 // client-side
-socket.on("connect", () => {
-  //  console.log(socket.id); // x8WIv7-mJelg7on_ALbx
-  });
-  
-  socket.on("disconnect", () => {
-    console.log(socket.id); // undefined
-  });
+    socket.on("connect", () => {
+        console.log(socket.id);
+    });
+
+    socket.on("disconnect", () => {
+        console.log(socket.id);
+    });
 });
 
-let lat : number = 48.9118463
-let long : number = 2.3225758
+document.querySelector('#form')!.addEventListener("submit", (event) => {
+    event.preventDefault()
+    let input = document.querySelector('#input') as HTMLInputElement;
+    if (input.value) {
+        socket.emit("new message", {message: input.value, id: socket.id});
+        input.value = "";
+    }
+})
 
-let map = L.map('map').setView([lat, long], 13);
+socket.on("write message", (data) => {
+    let chatDiv = document.createElement("li");
+    chatDiv.className = "chat";
+    let userSpan = document.createElement("span");
+    userSpan.className = "user";
+    userSpan.innerHTML = data.id;
+    let message = document.createElement("p");
+    message.className = "message";
+    message.innerHTML = data.message;
+    chatDiv.appendChild(userSpan);
+    chatDiv.appendChild(message);
+    let messages : HTMLUListElement = document.querySelector("#messages")!;
+    messages.appendChild(chatDiv);
+    messages.scrollTop = messages.scrollHeight;
+})
+
+socket.on("new user joined", (users: User[]) => {
+    console.log("new user joined", myself)
+    allUsers = users;
+    console.log("my id", myself.id)
+    usersMarkers[myself.id] = startMarker
+    console.log(users);
+})
+
+//END OF SOCKETS STUFF
+
+
+// MAP STUFF
+
+let map = L.map('map').locate({setView: true, maxZoom: 16});
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
-let startMarker = L.marker([lat, long]).addTo(map);
+// const usersMarkers : {[key: string]: L.Marker} = {};
+
+let startMarker = L.marker([myself.position.lat!, myself.position.lng!]).addTo(map).bindPopup("This is your position");
 
 let goal = L.marker([48.8263658,2.3690903], {
     draggable: true,
@@ -59,14 +99,24 @@ let goal = L.marker([48.8263658,2.3690903], {
     })
 }).addTo(map);
 
-// map.locate({setView: true, maxZoom: 16});
-//
-// setInterval(() => {
-//     map.locate();
-// }, 10000); // calcul toutes les 10 secs
+map.locate({setView: true, maxZoom: 16});
+
+setInterval(() => {
+    map.locate();
+}, 10000); // calcul toutes les 10 secs
 
 map.on('locationfound', (e) => {
-    startMarker.setLatLng(e.latlng);
+    myself.position.lat = e.latlng.lat;
+    myself.position.lng = e.latlng.lng;
+    startMarker.setLatLng([myself.position.lat, myself.position.lng]);
+
+    createOrUpdateUserMarker(myself.position.lat, myself.position.lng, myself.id);
+
+    allUsers.forEach((user) => {
+
+        console.log(user)
+    })
+
     if (goal) {
         calculateRoute(e.latlng, goal.getLatLng());
     }
@@ -74,14 +124,19 @@ map.on('locationfound', (e) => {
 
 goal.on('dragend', (e) => {
     calculateRoute(startMarker.getLatLng(), e.target.getLatLng());
+    socket.emit("goal changed", {room: myself.room, latlng: e.target.getLatLng()});
     console.log("Goal moved to: " + e.target.getLatLng());
     console.log("Distance to goal: " + distance(startMarker.getLatLng(), e.target.getLatLng()));
     console.log("Travel time to goal: " + travelTime(distance(startMarker.getLatLng(), e.target.getLatLng()), 5));
 })
 
+socket.on("move goal", (data) => {
+    goal.setLatLng(data);
+    calculateRoute(startMarker.getLatLng(), data);
+})
+
 console.log(goal.getLatLng())
 
-startMarker.bindPopup("This is your position").openPopup();
 goal.bindPopup("Meetup point");
 
 // let popup = L.popup()
@@ -89,18 +144,47 @@ goal.bindPopup("Meetup point");
 //     .setContent("I am a standalone popup.")
 //     .openOn(map);
 
-// greenMarker
-let currentUserRestaurant = L.marker([0, 0], {
-    icon: L.icon({
-        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-    })
-})
-function createRestaurantMarker(pos: string, name:string) {
+const usersRestaurants: {[id: string]: L.Marker} = {};
+const usersMarkers : {[id: string]: L.Marker} = {};
+function createRestaurantMarker(pos: string, name:string, id: string) {
     let lat = parseFloat(pos.split(";")[0]);
     let long = parseFloat(pos.split(";")[1]);
-    currentUserRestaurant.setLatLng([lat, long]).addTo(map);
-    currentUserRestaurant.bindPopup(name).openPopup();
+    if (usersRestaurants[id]) {
+        usersRestaurants[id].setLatLng([lat, long]);
+    }else{
+        //green marker or yellow marker
+        usersRestaurants[id] = L.marker([lat, long], {
+            icon: L.icon({
+                iconUrl: id === socket.id ? 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png' : 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
+            })
+        }).bindPopup(`${name} <br> From : ${socket.id}`).addTo(map);
+    }
 }
+
+function createOrUpdateUserMarker(lat: number, lng: number, id: string) {
+    if (usersMarkers[id]) {
+        usersMarkers[id].setLatLng([lat, lng]);
+    }else{
+        usersMarkers[id] = L.marker([lat, lng]).addTo(map);
+    }
+    console.log(id)
+    socket.emit("user moved", {room: myself.room, latlng: {lat, lng}, id});
+}
+
+socket.on('move user', (data: User[]) => {
+    allUsers = data
+    allUsers.forEach((user) => {
+        if (usersMarkers[user.id]) {
+            usersMarkers[user.id].setLatLng([user.position.lat, user.position.lng]);
+        }else{
+            usersMarkers[user.id] = L.marker([user.position.lat, user.position.lng]).addTo(map);
+        }
+    })
+})
+
+socket.on("send restaurant", (data) => {
+    createRestaurantMarker(data.position, data.name, data.id);
+})
 
 function distance(pointA : LatLng, pointB : LatLng) : number {
     let p = Math.PI / 180;
@@ -122,4 +206,6 @@ function calculateRoute(start : LatLng, goal : LatLng) : number {
 function travelTime(distance : number, speed: number) : number {
     return distance / speed;
 }
-export { createRestaurantMarker }
+//END OF MAP STUFF
+
+export { createRestaurantMarker, socket };
