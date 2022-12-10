@@ -9,11 +9,7 @@ const io = new Server(server);
 const usersByRoom: { [roomId: string]: User[] } = {};
 
 io.on('connection', (socket) => {
-    console.log('a user connected');
-    console.log(socket.rooms)
-
     socket.on("new user", (user: User) => {
-        user.id = socket.id;
         if (usersByRoom[user.room]) {
             usersByRoom[user.room].push(user);
         } else {
@@ -25,11 +21,11 @@ io.on('connection', (socket) => {
     })
 
     socket.on("new message", (data) => {
-        io.emit("write message", data);
+        io.to(data.room).emit("write message", data);
     })
 
     socket.on('new restaurant', (data) => {
-        io.emit('send restaurant', data);
+        io.to(data.room).emit('send restaurant', data);
     })
 
     socket.on('goal changed', (data) => {
@@ -37,7 +33,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('user moved', (data) => {
-        console.log("user moved", data)
         if (!usersByRoom[data.room]) return;
         usersByRoom[data.room].forEach((user) => {
             if (user.id === data.id) {
@@ -46,6 +41,18 @@ io.on('connection', (socket) => {
             }
         })
         io.to(data.room).emit('move user', usersByRoom[data.room]);
+    })
+
+    socket.on('disconnecting', () => {
+        console.log("disconnecting")
+        const room = Array.from(socket.rooms)[1]
+        if (!room) return false
+        const userIndex = usersByRoom[room]?.findIndex((obj) => obj.id === socket.id)
+        console.log("user Index", userIndex)
+        if (!userIndex) return false
+        usersByRoom[room].splice(userIndex, 1)
+        console.log("eeh")
+        io.emit("user disconnected", {users: usersByRoom[room],  removedId: socket.id})
     })
 
     socket.on('disconnect', () => {

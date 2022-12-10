@@ -57,6 +57,7 @@ export function saveUser(user: User){
     
     user.name = inputName.value;
     user.room = inputRoomId.value;
+    user.id = socket.id;
     if (user.name && user.room){
         user.inRoom = true;
         message.innerText = "User saved";

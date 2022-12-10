@@ -48,7 +48,7 @@ body{
     min-width: 200px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: space-between;
 }
 
 #messages{

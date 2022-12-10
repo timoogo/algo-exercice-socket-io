@@ -7,6 +7,9 @@ import {LatLng} from "leaflet";
 import { io, Socket } from "socket.io-client";
 import { showPopin } from "./Components/Popin";
 
+let socket: Socket;
+socket = io()
+
 let myself: User = {
     name: undefined,
     position: {
@@ -15,14 +18,13 @@ let myself: User = {
     },
     inRoom: false,
     room: "",
-    id: "id"
+    id: ""
 }
 
 let allUsers: User[] = [];
 
 // SOCKETS STUFF
-let socket: Socket;
-socket = io()
+
 
 document.addEventListener("DOMContentLoaded", () => {
    
@@ -46,7 +48,7 @@ document.querySelector('#form')!.addEventListener("submit", (event) => {
     event.preventDefault()
     let input = document.querySelector('#input') as HTMLInputElement;
     if (input.value) {
-        socket.emit("new message", {message: input.value, id: socket.id});
+        socket.emit("new message", {message: input.value, id: socket.id, room: myself.room});
         input.value = "";
     }
 })
@@ -71,8 +73,18 @@ socket.on("new user joined", (users: User[]) => {
     console.log("new user joined", myself)
     allUsers = users;
     console.log("my id", myself.id)
+    generateUsersList(allUsers)
     usersMarkers[myself.id] = startMarker
     console.log(users);
+})
+
+socket.on("user disconnected", (data) => {
+    console.log("disco")
+    allUsers = data.users
+    delete usersMarkers[data.removedId]
+    placeAllMarkers(allUsers)
+    generateUsersList(allUsers)
+    console.log("user disconnected")
 })
 
 //END OF SOCKETS STUFF
@@ -89,8 +101,6 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // const usersMarkers : {[key: string]: L.Marker} = {};
 
-let startMarker = L.marker([myself.position.lat!, myself.position.lng!]).addTo(map).bindPopup("This is your position");
-
 let goal = L.marker([48.8263658,2.3690903], {
     draggable: true,
     title: "Draggable Goal",
@@ -98,6 +108,9 @@ let goal = L.marker([48.8263658,2.3690903], {
         iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
     })
 }).addTo(map);
+
+
+let startMarker = L.marker([myself.position.lat!, myself.position.lng!]).addTo(map).bindPopup("This is your position");
 
 map.locate({setView: true, maxZoom: 16});
 
@@ -111,11 +124,6 @@ map.on('locationfound', (e) => {
     startMarker.setLatLng([myself.position.lat, myself.position.lng]);
 
     createOrUpdateUserMarker(myself.position.lat, myself.position.lng, myself.id);
-
-    allUsers.forEach((user) => {
-
-        console.log(user)
-    })
 
     if (goal) {
         calculateRoute(e.latlng, goal.getLatLng());
@@ -146,6 +154,8 @@ goal.bindPopup("Meetup point");
 
 const usersRestaurants: {[id: string]: L.Marker} = {};
 const usersMarkers : {[id: string]: L.Marker} = {};
+
+usersMarkers[myself.id] = startMarker
 function createRestaurantMarker(pos: string, name:string, id: string) {
     let lat = parseFloat(pos.split(";")[0]);
     let long = parseFloat(pos.split(";")[1]);
@@ -167,19 +177,14 @@ function createOrUpdateUserMarker(lat: number, lng: number, id: string) {
     }else{
         usersMarkers[id] = L.marker([lat, lng]).addTo(map);
     }
-    console.log(id)
     socket.emit("user moved", {room: myself.room, latlng: {lat, lng}, id});
 }
 
 socket.on('move user', (data: User[]) => {
     allUsers = data
-    allUsers.forEach((user) => {
-        if (usersMarkers[user.id]) {
-            usersMarkers[user.id].setLatLng([user.position.lat, user.position.lng]);
-        }else{
-            usersMarkers[user.id] = L.marker([user.position.lat, user.position.lng]).addTo(map);
-        }
-    })
+    console.log("move user", data)
+    console.log("myslef", myself)
+    placeAllMarkers(allUsers)
 })
 
 socket.on("send restaurant", (data) => {
@@ -203,8 +208,25 @@ function calculateRoute(start : LatLng, goal : LatLng) : number {
     return travelTimeToGoal;
 }
 
+function placeAllMarkers(usersList: User[]) {
+    usersList.forEach((user) => {
+        if (usersMarkers[user.id]) {
+            usersMarkers[user.id].setLatLng([user.position.lat, user.position.lng]);
+        }else{
+            usersMarkers[user.id] = L.marker([user.position.lat, user.position.lng]).addTo(map);
+        }
+    })
+}
+
 function travelTime(distance : number, speed: number) : number {
     return distance / speed;
+}
+
+function generateUsersList(users: User[]) {
+    document.querySelector("#usersList")!.innerHTML = "";
+    users.forEach((user) => {
+        document.querySelector("#usersList")!.innerHTML += `<li>${user.name}</li>`;
+    })
 }
 //END OF MAP STUFF
 
