@@ -11,14 +11,15 @@ let socket: Socket;
 socket = io()
 
 let myself: User = {
-    name: undefined,
+    name: "",
     position: {
         lat: 0,
         lng: 0,
     },
     inRoom: false,
     room: "",
-    id: ""
+    id: "",
+    myChoice: undefined
 }
 
 let allUsers: User[] = [];
@@ -27,10 +28,10 @@ let allUsers: User[] = [];
 
 
 document.addEventListener("DOMContentLoaded", () => {
-   
-    renderRestaurantsComponents(mockRestaurants);
     renderDropdownComponent(mockRestaurants);
+    renderRestaurantsComponents(mockRestaurants);
     showPopin(myself);
+
 
 });
 document.addEventListener("click", () => {
@@ -48,7 +49,7 @@ document.querySelector('#form')!.addEventListener("submit", (event) => {
     event.preventDefault()
     let input = document.querySelector('#input') as HTMLInputElement;
     if (input.value) {
-        socket.emit("new message", {message: input.value, id: socket.id, room: myself.room});
+        socket.emit("new message", {message: input.value, id: socket.id, room: myself.room, author: myself.name});
         input.value = "";
     }
 })
@@ -58,7 +59,7 @@ socket.on("write message", (data) => {
     chatDiv.className = "chat";
     let userSpan = document.createElement("span");
     userSpan.className = "user";
-    userSpan.innerHTML = data.id;
+    userSpan.innerHTML = data.author;
     let message = document.createElement("p");
     message.className = "message";
     message.innerHTML = data.message;
@@ -70,21 +71,16 @@ socket.on("write message", (data) => {
 })
 
 socket.on("new user joined", (users: User[]) => {
-    console.log("new user joined", myself)
     allUsers = users;
-    console.log("my id", myself.id)
     generateUsersList(allUsers)
     usersMarkers[myself.id] = startMarker
-    console.log(users);
 })
 
 socket.on("user disconnected", (data) => {
-    console.log("disco")
     allUsers = data.users
     delete usersMarkers[data.removedId]
     placeAllMarkers(allUsers)
     generateUsersList(allUsers)
-    console.log("user disconnected")
 })
 
 //END OF SOCKETS STUFF
@@ -94,7 +90,9 @@ socket.on("user disconnected", (data) => {
 
 let map = L.map('map').locate({setView: true, maxZoom: 16});
 
+
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    minZoom:2,
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
@@ -133,17 +131,15 @@ map.on('locationfound', (e) => {
 goal.on('dragend', (e) => {
     calculateRoute(startMarker.getLatLng(), e.target.getLatLng());
     socket.emit("goal changed", {room: myself.room, latlng: e.target.getLatLng()});
-    console.log("Goal moved to: " + e.target.getLatLng());
-    console.log("Distance to goal: " + distance(startMarker.getLatLng(), e.target.getLatLng()));
-    console.log("Travel time to goal: " + travelTime(distance(startMarker.getLatLng(), e.target.getLatLng()), 5));
+    // console.log("Goal moved to: " + e.target.getLatLng());
+    // console.log("Distance to goal: " + distance(startMarker.getLatLng(), e.target.getLatLng()));
+    // console.log("Travel time to goal: " + travelTime(distance(startMarker.getLatLng(), e.target.getLatLng()), 5));
 })
 
 socket.on("move goal", (data) => {
     goal.setLatLng(data);
-    calculateRoute(startMarker.getLatLng(), data);
+    generateUsersList(allUsers)
 })
-
-console.log(goal.getLatLng())
 
 goal.bindPopup("Meetup point");
 
@@ -153,10 +149,10 @@ goal.bindPopup("Meetup point");
 //     .openOn(map);
 
 const usersRestaurants: {[id: string]: L.Marker} = {};
-const usersMarkers : {[id: string]: L.Marker} = {};
+let usersMarkers : {[id: string]: L.Marker} = {};
 
 usersMarkers[myself.id] = startMarker
-function createRestaurantMarker(pos: string, name:string, id: string) {
+function createRestaurantMarker(pos: string, name:string, id: string, username: string) {
     let lat = parseFloat(pos.split(";")[0]);
     let long = parseFloat(pos.split(";")[1]);
     if (usersRestaurants[id]) {
@@ -167,7 +163,7 @@ function createRestaurantMarker(pos: string, name:string, id: string) {
             icon: L.icon({
                 iconUrl: id === socket.id ? 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png' : 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
             })
-        }).bindPopup(`${name} <br> From : ${socket.id}`).addTo(map);
+        }).bindPopup(`${name} <br> From : ${username}`).addTo(map);
     }
 }
 
@@ -182,13 +178,15 @@ function createOrUpdateUserMarker(lat: number, lng: number, id: string) {
 
 socket.on('move user', (data: User[]) => {
     allUsers = data
-    console.log("move user", data)
-    console.log("myslef", myself)
+    // console.log("move user", data)
+    // console.log("myslef", myself)
     placeAllMarkers(allUsers)
+    generateUsersList(allUsers)
 })
 
 socket.on("send restaurant", (data) => {
-    createRestaurantMarker(data.position, data.name, data.id);
+    console.log(usersRestaurants)
+    createRestaurantMarker(data.position, data.name, data.id, data.username);
 })
 
 function distance(pointA : LatLng, pointB : LatLng) : number {
@@ -203,15 +201,21 @@ function distance(pointA : LatLng, pointB : LatLng) : number {
 function calculateRoute(start : LatLng, goal : LatLng) : number {
     let distanceToGoal = distance(start, goal);
     let travelTimeToGoal = travelTime(distanceToGoal, 5);
-    console.log("Distance to goal: " + distanceToGoal + "km");
-    console.log("Travel time to goal: " + travelTimeToGoal + "hours");
+    // console.log("Distance to goal: " + distanceToGoal + "km");
+    // console.log("Travel time to goal: " + travelTimeToGoal + "hours");
     return travelTimeToGoal;
 }
 
 function placeAllMarkers(usersList: User[]) {
+    for(let key in usersMarkers) {
+        map.removeLayer(usersMarkers[key])
+        delete usersMarkers[key]
+    }
+    console.log(usersMarkers)
+    console.log(usersList)
     usersList.forEach((user) => {
         if (usersMarkers[user.id]) {
-            usersMarkers[user.id].setLatLng([user.position.lat, user.position.lng]);
+            usersMarkers[user.id].setLatLng([user.position.lat, user.position.lng]).addTo(map);
         }else{
             usersMarkers[user.id] = L.marker([user.position.lat, user.position.lng]).addTo(map);
         }
@@ -223,11 +227,12 @@ function travelTime(distance : number, speed: number) : number {
 }
 
 function generateUsersList(users: User[]) {
-    document.querySelector("#usersList")!.innerHTML = "";
+    document.querySelector("#usersList")!.innerHTML = ""
     users.forEach((user) => {
-        document.querySelector("#usersList")!.innerHTML += `<li>${user.name}</li>`;
+        const traveltime = calculateRoute(new LatLng(user.position.lat, user.position.lng), goal.getLatLng()).toFixed(2)
+        document.querySelector("#usersList")!.innerHTML += `<li>${user.name} <br> ${traveltime} hours until meetup point reached </li>`;
     })
 }
 //END OF MAP STUFF
 
-export { createRestaurantMarker, socket };
+export { createRestaurantMarker, socket, myself };

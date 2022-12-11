@@ -1,5 +1,5 @@
 import { Restaurant } from "../Models/Restaurant";
-import {createRestaurantMarker, socket} from "../main";
+import {createRestaurantMarker, socket, myself} from "../main";
 
 function dropdownListener(select: HTMLSelectElement) {
     let restaurantDiv = document.createElement("div");
@@ -13,10 +13,22 @@ function dropdownListener(select: HTMLSelectElement) {
             restaurantDiv.innerHTML = select.value;
         } else {
             console.log("else");
-            restaurantDiv.innerHTML = "restao" + event.target.value;
             let restaurantName = select.options[select.selectedIndex].text;
-            createRestaurantMarker(event.target.value, restaurantName, socket.id);
-            socket.emit("new restaurant", {position: event.target.value, name: restaurantName, id: socket.id});
+            myself.myChoice = event.target.value;
+            // my choice
+            myself.myChoice = {
+                name: restaurantName,
+                address: restaurantName,
+                position: {
+                    lat: Number(event.target.value.split(";")[0]),
+                    lng: Number(event.target.value.split(";")[1])
+                }
+            }
+
+            createRestaurantMarker(event.target.value, myself.myChoice.name, socket.id, myself.name);
+            socket.emit("new restaurant", {position: event.target.value, name: restaurantName, id: socket.id, username: myself.name, room: myself.room});
+            console.log("myself.name", myself.myChoice.name);
+            
         }
     })
 }

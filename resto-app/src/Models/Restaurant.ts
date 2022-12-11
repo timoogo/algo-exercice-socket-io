@@ -5,4 +5,5 @@ export interface Restaurant {
     address: string;
     position: Position;
 
+
 }
